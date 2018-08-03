@@ -1,8 +1,8 @@
 {
-    "name": "srt",
-    "displayName": "srt",
-    "description": "styled components sass rule ordering",
-    "version": "0.0.1",
+    "name": "vscode-styled-sort",
+    "displayName": "vscode-styled-sort",
+    "description": "opinionated styeld-components rule sorting",
+    "version": "0.0.2",
     "publisher": "ease",
     "engines": {
         "vscode": "^1.25.0"
@@ -11,25 +11,15 @@
         "Other"
     ],
     "activationEvents": [
-        "onLanguage:javascript"
+        "onCommand:extension.styled-sort"
     ],
     "main": "./out/extension",
     "contributes": {
-        "languages": [
-            {
-                "id": "javascript",
-                "aliases": [
-                    "Javascript"
-                ],
-                "extensions": [
-                    "javascript"
-                ]
-            }
-        ],
         "commands": [
             {
-                "command": "extension.format-foo",
-                "title": "(Bad) Format Foo Files"
+                "command": "extension.styled-sort",
+                "title": "Sort styled-components rules",
+                "category": "EASE"
             }
         ]
     },

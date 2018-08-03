@@ -11,15 +11,18 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Initializing Awesome 🤘');
 
-    // 👍 formatter implemented using API
-    vscode.languages.registerDocumentFormattingEditProvider('javascript', {
-        provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+    vscode.commands.registerCommand('extension.styled-sort', () => {
+        const {activeTextEditor} = vscode.window;
 
+        if (activeTextEditor && activeTextEditor.document.languageId === 'javascript') {
+            const {document} = activeTextEditor;
+            
             const regEx = /(styled\..+|css|styled\(.+\))`([^`]+)`/g;
             const text = document.getText();
      
             let match: any = [];
-            let edits: any = [];
+            const edits = new vscode.WorkspaceEdit();
+
             while (match = regEx.exec(text)) {
                 const startPos = document.positionAt(match.index);
                 const endPos = document.positionAt(match.index + match[0].length - 1);
@@ -98,12 +101,18 @@ export function activate(context: vscode.ExtensionContext) {
                         formattedRules += `\t${rule}\n`;
                     });
 
-                    edits.push(vscode.TextEdit.replace(range, formattedRules));
+                    edits.replace(document.uri, range, formattedRules);
+
                 }
+
             }
-            return edits;
+
+            return vscode.workspace.applyEdit(edits);
+
         }
+
     });
+
 }
 
 // this method is called when your extension is deactivated
