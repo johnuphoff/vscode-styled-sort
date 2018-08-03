@@ -1,7 +1,7 @@
 {
     "name": "vscode-styled-sort",
     "displayName": "vscode-styled-sort",
-    "description": "opinionated styeld-components rule sorting",
+    "description": "Opinionated rule sorting for styled-components.",
     "version": "0.0.2",
     "publisher": "ease",
     "engines": {
@@ -18,8 +18,8 @@
         "commands": [
             {
                 "command": "extension.styled-sort",
-                "title": "Sort styled-components rules",
-                "category": "EASE"
+                "title": "sort",
+                "category": "styled-components"
             }
         ]
     },
