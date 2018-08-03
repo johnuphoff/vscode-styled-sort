@@ -1,41 +1,45 @@
 {
-    "name": "vscode-styled-sort",
-    "displayName": "vscode-styled-sort",
-    "description": "Opinionated rule sorting for styled-components.",
-    "icon": "assets/css-sort.png",
-    "version": "0.0.2",
-    "publisher": "ease",
-    "engines": {
-        "vscode": "^1.25.0"
-    },
-    "categories": [
-        "Other"
-    ],
-    "activationEvents": [
-        "onCommand:extension.styled-sort"
-    ],
-    "main": "./out/extension",
-    "contributes": {
-        "commands": [
-            {
-                "command": "extension.styled-sort",
-                "title": "sort",
-                "category": "styled-components"
-            }
-        ]
-    },
-    "scripts": {
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
-    },
-    "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "tslint": "^5.8.0",
-        "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
-    }
+  "name": "vscode-styled-sort",
+  "displayName": "vscode-styled-sort",
+  "description": "Opinionated rule sorting for styled-components.",
+  "version": "0.2.0",
+  "publisher": "ease",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/johnuphoff/vscode-styled-sort"
+  },
+  "engines": {
+    "vscode": "^1.25.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.styled-sort"
+  ],
+  "main": "./out/extension",
+  "icon": "assets/css-sort.png",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.styled-sort",
+        "title": "sort",
+        "category": "styled-components"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.1",
+    "vscode": "^1.1.6",
+    "tslint": "^5.8.0",
+    "@types/node": "^7.0.43",
+    "@types/mocha": "^2.2.42"
+  }
 }
