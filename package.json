@@ -2,6 +2,7 @@
     "name": "vscode-styled-sort",
     "displayName": "vscode-styled-sort",
     "description": "Opinionated rule sorting for styled-components.",
+    "icon": "assets/css-sort.png",
     "version": "0.0.2",
     "publisher": "ease",
     "engines": {
