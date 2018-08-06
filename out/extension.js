@@ -1,8 +1,67 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require("vscode");
+String.prototype.insert = function (index, string) {
+    if (index > 0) {
+        return this.substring(0, index) + string + this.substring(index, this.length);
+    }
+    return string + this;
+};
+function insertLineBreaks(string) {
+    let result = '';
+    for (let index = 0; index < string.length; index++) {
+        const lastChar = index > 0 ? string[index - 1] : string[0];
+        const char = string[index];
+        const nextChar = index > string.length ? string[string.length] : string[index + 1];
+        result += char;
+        if ((char === '{' && lastChar !== '$')
+            || char === ';'
+            || (char === '}' && nextChar !== ';')) {
+            result += '\n';
+        }
+    }
+    return result;
+}
+function arrayFromString(string) {
+    return string
+        .split('\n')
+        .map((entry) => entry.trim())
+        .filter(function (element) { return element !== ''; });
+}
+function sortRules(array) {
+    let sortedArray = array.filter((element) => {
+        return element !== '';
+    })
+        .sort((a, b) => {
+        return a.replace(/^\W+/, 'z').localeCompare(b.replace(/^\W+/, 'z'));
+    });
+    return sortedArray;
+}
+function sortTemplateLiterals(array) {
+    let sortedArray = array;
+    array.map((rule, index) => {
+        if (rule.match(/^[$]{.*}/g)) {
+            sortedArray.splice(index, 1);
+            sortedArray.unshift(rule);
+        }
+    });
+    return sortedArray;
+}
+function addNewLineBetweenGroups(array, numberOfTabs = 1) {
+    let result = '';
+    array.map((rule, index) => {
+        // 👍 We want line breaks between template literals and other groups
+        if (!rule.match(/^[$]{.*}/g) && index > 1 && array[index - 1].match(/^[$]{.*}/g)) {
+            result += '\n';
+        }
+        // 👍 We want line breaks between a vendor prefix and any previous rules or selectors
+        if (array.length > 0 && rule.match(/-webkit-|-moz-|-ms-|-o-/g) && !array[index - 1].match(/-webkit-|-moz-|-ms-|-o-/g)) {
+            result += '\n';
+        }
+        result += `${('\t').repeat(numberOfTabs)}${rule}\n`;
+    });
+    return result;
+}
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 function activate(context) {
@@ -22,64 +81,62 @@ function activate(context) {
                 const endPos = document.positionAt(match.index + match[0].length - 1);
                 const range = new vscode.Range(new vscode.Position(startPos.line + 1, 0), endPos);
                 if (match.length > 1) {
-                    let rules = match[2]
-                        .substring(match[2].indexOf('`') + 1)
-                        .slice(0, -1)
-                        .split('\n')
-                        .map((entry) => entry.trim())
-                        .filter(function (element) { return element !== ''; });
-                    let subquery = '';
-                    let subqueryExists = false;
-                    let mutableRules = rules.slice(0);
-                    for (let i = 0; i < rules.length; i++) {
-                        const line = rules[i];
-                        // subquery exists when line matches regex
-                        if (line.match('^&:')) {
-                            subqueryExists = true;
+                    let rulesString = match[2];
+                    // now insert line breaks so that we can safely split on \n
+                    const resultString = insertLineBreaks(rulesString);
+                    const rulesArray = arrayFromString(resultString);
+                    let pseudoSelector = '';
+                    let pseudoSelectorString = '';
+                    let pseudoSelectorExists = false;
+                    let mutableRules = rulesArray.slice(0);
+                    // Let's hunt for pseudo selectors
+                    for (let i = 0; i < rulesArray.length; i++) {
+                        const line = rulesArray[i];
+                        // Pseudo selector exists when line matches regex
+                        if (line.match(/^&:/g)) {
+                            pseudoSelectorExists = true;
+                            // Save the selector
+                            pseudoSelector = line;
+                            // Remove the line from mutableRules
+                            mutableRules[i] = '';
+                            // Continue to next iteration
+                            continue;
                         }
                         // all subsequent lines are appended to subquery string
-                        if (subqueryExists) {
-                            subquery += line;
+                        if (pseudoSelectorExists) {
+                            // Remove the line from mutableRules
                             mutableRules[i] = '';
-                            // until we get to a line that contains a closing brace with no semicolon
-                            if (line.match(/[^;{]$/g)) {
-                                // save the selector so we can rebuild the formatted string later
-                                const selector = subquery.substring(0, subquery.indexOf('{') + 1);
-                                // build sorted array of subquery rules
-                                const rules = subquery
-                                    .split(selector)[1]
-                                    .slice(0, -1)
-                                    .split(';')
-                                    .map((entry) => entry.trim())
-                                    .filter(function (element) { return element !== ''; })
-                                    .sort();
-                                // rebuild the subquery rules using the selector and sorted array
-                                let formattedSubqueryRules = `${selector}\n`;
-                                rules.map((rule) => {
-                                    formattedSubqueryRules += `\t\t${rule};\n`;
-                                });
-                                formattedSubqueryRules += '\t}';
-                                subqueryExists = false;
-                                mutableRules.push(formattedSubqueryRules);
-                                subquery = '';
+                            if (line !== '}') {
+                                pseudoSelectorString += line;
+                            }
+                            else {
+                                // We have reached the end of the pseudo selector
+                                pseudoSelectorExists = false;
+                                // now insert line breaks so that we can safely split on \n like we did previously
+                                const pseudoSelectorResultString = insertLineBreaks(pseudoSelectorString);
+                                const pseudoSelectorRulesArray = arrayFromString(pseudoSelectorResultString);
+                                // sort inner rules alphabetically
+                                const sortedPseudoSelectorRules = sortTemplateLiterals(sortRules(pseudoSelectorRulesArray));
+                                // Add line break between groups
+                                let result = addNewLineBetweenGroups(sortedPseudoSelectorRules, 2);
+                                mutableRules.push(`${pseudoSelector}\n${result}\t}`);
+                                // Reset the string for the next cycle
+                                pseudoSelectorString = '';
                             }
                         }
                     }
-                    const filteredRules = mutableRules
-                        .filter((element) => {
-                        return element !== '';
-                    })
-                        .sort((a, b) => {
-                        return a.replace(/^\W+/, 'z').localeCompare(b.replace(/^\W+/, 'z'));
-                    });
-                    let formattedRules = '';
-                    filteredRules.map((rule, index) => {
-                        if (filteredRules[index].match(/^&/g)) {
-                            formattedRules += '\n';
-                        }
-                        formattedRules += `\t${rule}\n`;
-                    });
-                    edits.replace(document.uri, range, formattedRules);
+                    // TODO Combine these two sorts
+                    // sort outer rules alphabetically
+                    const sortedRules = sortTemplateLiterals(sortRules(mutableRules));
+                    // Add line break between groups
+                    let result = addNewLineBetweenGroups(sortedRules);
+                    // clean up spaces and tabs between pseudo selectors
+                    const regEx2 = /&:.*/g;
+                    let match2 = [];
+                    while (match2 = regEx2.exec(result)) {
+                        result = result.insert(match2.index, '\n\t');
+                    }
+                    edits.replace(document.uri, range, result);
                 }
             }
             return vscode.workspace.applyEdit(edits);
@@ -87,8 +144,4 @@ function activate(context) {
     });
 }
 exports.activate = activate;
-// this method is called when your extension is deactivated
-function deactivate() {
-}
-exports.deactivate = deactivate;
 //# sourceMappingURL=extension.js.map
