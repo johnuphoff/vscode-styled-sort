@@ -77,7 +77,9 @@ function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1)
     array.map((rule: string, index: number) => {
 
         // 👍 We want line breaks between template literals and other groups
-        if (!rule.match(/^[$]{.*}/g) && index > 1 && array[index-1].match(/^[$]{.*}/g)) {
+        // If there are only two rules in the group in you don't want a space between them change comparison "index > 0" to "index > 1"
+        // TODO make this a configuration options
+        if (!rule.match(/^[$]{.*}/g) && index > 0 && array[index-1].match(/^[$]{.*}/g)) {
             result += '\n';
         }
 
@@ -92,13 +94,7 @@ function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1)
     return result;
 }
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Initializing Awesome 🤘');
 
     vscode.commands.registerCommand('extension.styled-sort', () => {
         const {activeTextEditor} = vscode.window;

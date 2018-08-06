@@ -1,6 +1,8 @@
 # vscode-styled-sort
 Opinionated rule sorting for styled-components.
 
+![alt text](https://media.giphy.com/media/fdOG1lxG4KrggsRRgk/giphy.gif)
+
 ## Install
 Inside VSCode, press Ctrl+P, and enter:
 ```
