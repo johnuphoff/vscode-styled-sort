@@ -1,7 +1,7 @@
 # vscode-styled-sort
 Opinionated rule sorting for styled-components.
 
-![alt text](https://raw.githubusercontent.com/johnuphoff/vscode-styled-sort/master/assets/to/animated.gif)
+![alt text](https://github.com/johnuphoff/vscode-styled-sort/blob/master/assets/animated.gif)
 
 ## Install
 Inside VSCode, press Ctrl+P, and enter:
