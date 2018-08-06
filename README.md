@@ -1,7 +1,7 @@
 # vscode-styled-sort
 Opinionated rule sorting for styled-components.
 
-![alt text](https://github.com/johnuphoff/vscode-styled-sort/blob/master/assets/animated.gif)
+[![animated.gif](https://s33.postimg.cc/c1k5urvm7/animated.gif)
 
 ## Install
 Inside VSCode, press Ctrl+P, and enter:
@@ -11,13 +11,13 @@ ext install vscode-styled-sort
 It should be the top result.
 
 ### Opinionated sorting of styled-components rules:
-Template Literals  
+**Template Literals**  
     *line break*  
-CSS ordered alphabetically  
+**CSS ordered alphabetically**  
     *line break*  
-Pseudo Selectors  
+**Pseudo Selectors**  
     *line break*  
-Vendor prefixes (please don't)  
+**Vendor prefixes (please don't)**  
 
 ## Usage
 Press key combination ⇧⌘P to bring up the Command Pallete. Grep for styled-components: sort. 
