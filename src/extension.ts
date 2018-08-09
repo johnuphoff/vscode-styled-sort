@@ -94,12 +94,30 @@ function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1)
     return result;
 }
 
+function langIsTSOrJS(language: string) {
+    switch (language) {
+        case 'javascript':
+        case 'typescript':
+        case 'typescriptreact':
+            return true;
+        default:
+            return false;
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('extension.styled-sort', () => {
-        const {activeTextEditor} = vscode.window;
+        const { activeTextEditor } = vscode.window;
+        let lang;
 
-        if (activeTextEditor && activeTextEditor.document.languageId === 'javascript') {
+        if (activeTextEditor) {
+            lang = activeTextEditor.document.languageId;
+        } else {
+            return;
+        }
+
+        if (langIsTSOrJS(lang)) {
             const {document} = activeTextEditor;
             
             const regEx = /(styled\..+|css|styled\(.+\))`([^`]+)`/g;
