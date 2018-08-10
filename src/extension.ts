@@ -97,6 +97,7 @@ function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1)
 function isSupportedLanguage(language: string) {
     switch (language) {
         case 'javascript':
+        case 'javascriptreact':
         case 'typescript':
         case 'typescriptreact':
             return true;
