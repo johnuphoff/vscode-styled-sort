@@ -94,107 +94,119 @@ function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1)
     return result;
 }
 
+function isSupportedLanguage(language: string) {
+    switch (language) {
+        case 'javascript':
+        case 'typescript':
+        case 'typescriptreact':
+            return true;
+        default:
+            return false;
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('extension.styled-sort', () => {
-        const {activeTextEditor} = vscode.window;
+        const { activeTextEditor } = vscode.window;
 
-        if (activeTextEditor && activeTextEditor.document.languageId === 'javascript') {
-            const {document} = activeTextEditor;
-            
-            const regEx = /(styled\..+|css|styled\(.+\))`([^`]+)`/g;
-            const text = document.getText();
-     
-            let match: any = [];
-            const edits = new vscode.WorkspaceEdit();
+        if (!activeTextEditor || !isSupportedLanguage(activeTextEditor.document.languageId)) {
+          return;
+        }
 
-            while (match = regEx.exec(text)) {
-                const startPos = document.positionAt(match.index);
-                const endPos = document.positionAt(match.index + match[0].length - 1);
-                const range = new vscode.Range(new vscode.Position(startPos.line + 1, 0), endPos);
-                
-                if (match.length > 1) {
-                    let rulesString: string = match[2];
+        const { document } = activeTextEditor;
 
-                    // now insert line breaks so that we can safely split on \n
-                    const resultString: string = insertLineBreaks(rulesString);
-                    const rulesArray: Array<string> = arrayFromString(resultString);
+        const regEx = /(styled\..+|css|styled\(.+\))`([^`]+)`/g;
+        const text = document.getText();
 
-                    let pseudoSelector: string = '';
-                    let pseudoSelectorString: string = '';
-                    let pseudoSelectorExists: boolean = false;
-                    let mutableRules: Array<string> = rulesArray.slice(0);
+        let match: any = [];
+        const edits = new vscode.WorkspaceEdit();
 
-                    // Let's hunt for pseudo selectors
-                    for (let i=0; i<rulesArray.length; i++) {
-                        const line: string = rulesArray[i];
+        while (match = regEx.exec(text)) {
+            const startPos = document.positionAt(match.index);
+            const endPos = document.positionAt(match.index + match[0].length - 1);
+            const range = new vscode.Range(new vscode.Position(startPos.line + 1, 0), endPos);
 
-                        // Pseudo selector exists when line matches regex
-                        if (line.match(/^&:/g)) {
-                            pseudoSelectorExists = true;
-                            // Save the selector
-                            pseudoSelector = line;
-                            // Remove the line from mutableRules
-                            mutableRules[i] = '';
-                            // Continue to next iteration
-                            continue;
-                        }
+            if (match.length > 1) {
+                let rulesString: string = match[2];
 
-                        // all subsequent lines are appended to subquery string
-                        if (pseudoSelectorExists) {
+                // now insert line breaks so that we can safely split on \n
+                const resultString: string = insertLineBreaks(rulesString);
+                const rulesArray: Array<string> = arrayFromString(resultString);
 
-                            // Remove the line from mutableRules
-                            mutableRules[i] = '';
-                            
-                            if (line !== '}') {
-                                pseudoSelectorString += line;
-                            } else {
-                                // We have reached the end of the pseudo selector
-                                pseudoSelectorExists = false;
-                                
-                                // now insert line breaks so that we can safely split on \n like we did previously
-                                const pseudoSelectorResultString: string = insertLineBreaks(pseudoSelectorString);
-                                const pseudoSelectorRulesArray: Array<string> = arrayFromString(pseudoSelectorResultString);
+                let pseudoSelector: string = '';
+                let pseudoSelectorString: string = '';
+                let pseudoSelectorExists: boolean = false;
+                let mutableRules: Array<string> = rulesArray.slice(0);
 
-                                // sort inner rules alphabetically
-                                const sortedPseudoSelectorRules = sortTemplateLiterals(sortRules(pseudoSelectorRulesArray));
-                                
-                                // Add line break between groups
-                                let result: string = addNewLineBetweenGroups(sortedPseudoSelectorRules, 2);
+                // Let's hunt for pseudo selectors
+                for (let i = 0; i < rulesArray.length; i++) {
+                    const line: string = rulesArray[i];
 
-                                mutableRules.push(`${pseudoSelector}\n${result}\t}`);
-
-                                // Reset the string for the next cycle
-                                pseudoSelectorString = '';
-                                
-                            }
-                        }
+                    // Pseudo selector exists when line matches regex
+                    if (line.match(/^&:/g)) {
+                        pseudoSelectorExists = true;
+                        // Save the selector
+                        pseudoSelector = line;
+                        // Remove the line from mutableRules
+                        mutableRules[i] = '';
+                        // Continue to next iteration
+                        continue;
                     }
 
-                    // TODO Combine these two sorts
-                    // sort outer rules alphabetically
-                    const sortedRules = sortTemplateLiterals(sortRules(mutableRules));
+                    // all subsequent lines are appended to subquery string
+                    if (pseudoSelectorExists) {
 
-                    // Add line break between groups
-                    let result: string = addNewLineBetweenGroups(sortedRules);
+                        // Remove the line from mutableRules
+                        mutableRules[i] = '';
 
-                    // clean up spaces and tabs between pseudo selectors
-                    const regEx2 = /&:.*/g;
-                    let match2: any = [];
+                        if (line !== '}') {
+                            pseudoSelectorString += line;
+                        } else {
+                            // We have reached the end of the pseudo selector
+                            pseudoSelectorExists = false;
 
-                    while (match2 = regEx2.exec(result)) {
-                        result = result.insert(match2.index, '\n\t');
+                            // now insert line breaks so that we can safely split on \n like we did previously
+                            const pseudoSelectorResultString: string = insertLineBreaks(pseudoSelectorString);
+                            const pseudoSelectorRulesArray: Array<string> = arrayFromString(pseudoSelectorResultString);
+
+                            // sort inner rules alphabetically
+                            const sortedPseudoSelectorRules = sortTemplateLiterals(sortRules(pseudoSelectorRulesArray));
+
+                            // Add line break between groups
+                            let result: string = addNewLineBetweenGroups(sortedPseudoSelectorRules, 2);
+
+                            mutableRules.push(`${pseudoSelector}\n${result}\t}`);
+
+                            // Reset the string for the next cycle
+                            pseudoSelectorString = '';
+
+                        }
                     }
-
-                    edits.replace(document.uri, range, result);
-
                 }
+
+                // TODO Combine these two sorts
+                // sort outer rules alphabetically
+                const sortedRules = sortTemplateLiterals(sortRules(mutableRules));
+
+                // Add line break between groups
+                let result: string = addNewLineBetweenGroups(sortedRules);
+
+                // clean up spaces and tabs between pseudo selectors
+                const regEx2 = /&:.*/g;
+                let match2: any = [];
+
+                while (match2 = regEx2.exec(result)) {
+                    result = result.insert(match2.index, '\n\t');
+                }
+
+                edits.replace(document.uri, range, result);
 
             }
 
-            return vscode.workspace.applyEdit(edits);
-
         }
+
+        return vscode.workspace.applyEdit(edits);
 
     });
 
