@@ -15,6 +15,13 @@ String.prototype.insert = function (index: number, string: string) {
     return string + this;
 };
 
+const regularExpressions: {[index: number] : RegExp} = {
+    0: /^[$]{(.*)}/,
+    1: /^[(a-z)].*/,
+    2: /^[$]{(.*)}/,
+    3: /^\&:[(a-z)]/
+};
+
 function insertLineBreaks(string: string) {
     let result: string = '';
     for (let index=0; index<string.length; index++) {
@@ -45,29 +52,52 @@ function arrayFromString(string: string) {
 
 function sortRules(array: Array<string>) {
 
-    let sortedArray: Array<string> =
-        array.filter((element: string) => { 
+    const sortedArray = array.filter((element: string) => { 
             return element !== ''; 
         })
         .sort((a: string, b: string) => {
-            return a.replace(/^\W+/, 'z').localeCompare(b.replace(/^\W+/, 'z'));
+            
+            // matches template literal
+            if (a.match(regularExpressions[0])) {
+                return compare(a, b, 0);
+            }
+
+            // matches string
+            if (a.match(regularExpressions[1])) {
+                return compare(a, b, 1);
+            }
+
+            // matches dash followed by a letter
+            if (a.match(regularExpressions[2])) {
+                return compare(a, b, 2);
+            }
+
+            // matches pseudo selector
+            if (a.match(regularExpressions[3])) {
+                return compare(a, b, 3);
+            }
+
+            return 1;
         });
     
     return sortedArray;
 }
 
-function sortTemplateLiterals(array: Array<string>) {
+function compare(a: string, b: string, aKey: number) {
 
-    let sortedArray: Array<string> = array;
+    for (let bKey in regularExpressions) {
 
-    array.map((rule: string, index: number) => {
-        if (rule.match(/^[$]{.*}/g)) {
-            sortedArray.splice(index, 1);
-            sortedArray.unshift(rule);
+        if (b.match(regularExpressions[bKey])) {
+
+            if (aKey === Number(bKey)) {
+                return a.localeCompare(b);
+            }
+
+            return aKey - Number(bKey);
         }
-    });
+    }
 
-    return sortedArray;
+    return -1;
 }
 
 function addNewLineBetweenGroups(array: Array<string>, numberOfTabs: number = 1) {
@@ -172,7 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
                             const pseudoSelectorRulesArray: Array<string> = arrayFromString(pseudoSelectorResultString);
 
                             // sort inner rules alphabetically
-                            const sortedPseudoSelectorRules = sortTemplateLiterals(sortRules(pseudoSelectorRulesArray));
+                            const sortedPseudoSelectorRules = sortRules(pseudoSelectorRulesArray);
 
                             // Add line break between groups
                             let result: string = addNewLineBetweenGroups(sortedPseudoSelectorRules, 2);
@@ -186,9 +216,7 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 }
 
-                // TODO Combine these two sorts
-                // sort outer rules alphabetically
-                const sortedRules = sortTemplateLiterals(sortRules(mutableRules));
+                const sortedRules = sortRules(mutableRules);
 
                 // Add line break between groups
                 let result: string = addNewLineBetweenGroups(sortedRules);
