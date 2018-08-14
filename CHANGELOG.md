@@ -8,3 +8,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## 0.0.3
 - Support for Javascript, TypeScript, and TypeScriptReact
+
+## 0.0.4 
+- Support for JavascriptReact
+
+## 0.0.5
+- Fix template literal sort
+- Refactor sort to use dictionary of regular expressions 
+- Remove localeCompare in favor of simple string comparisons
