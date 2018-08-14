@@ -90,7 +90,9 @@ function compare(a: string, b: string, aKey: string) {
         if (b.match(regularExpressions[bKey])) {
 
             if (aKey === bKey) {
-                return a.localeCompare(b);
+                if (a < b) { return -1;}
+                if (a > b) { return 1;}
+                return 0;
             }
 
             return Number(aKey) - Number(bKey);
