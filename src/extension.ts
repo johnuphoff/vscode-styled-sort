@@ -16,10 +16,10 @@ String.prototype.insert = function (index: number, string: string) {
 };
 
 const regularExpressions: {[index: number] : RegExp} = {
-    0: /^[$]{(.*)}/,
-    1: /^[(a-z)].*/,
-    2: /^[$]{(.*)}/,
-    3: /^\&:[(a-z)]/
+    '0': /^[$]{(.*)}/,
+    '1': /^[(a-z)].*/,
+    '2': /^[$]{(.*)}/,
+    '3': /^\&:[(a-z)]/
 };
 
 function insertLineBreaks(string: string) {
@@ -59,22 +59,22 @@ function sortRules(array: Array<string>) {
             
             // matches template literal
             if (a.match(regularExpressions[0])) {
-                return compare(a, b, 0);
+                return compare(a, b, '0');
             }
 
             // matches string
             if (a.match(regularExpressions[1])) {
-                return compare(a, b, 1);
+                return compare(a, b, '1');
             }
 
             // matches dash followed by a letter
             if (a.match(regularExpressions[2])) {
-                return compare(a, b, 2);
+                return compare(a, b, '2');
             }
 
             // matches pseudo selector
             if (a.match(regularExpressions[3])) {
-                return compare(a, b, 3);
+                return compare(a, b, '3');
             }
 
             return 1;
@@ -83,17 +83,17 @@ function sortRules(array: Array<string>) {
     return sortedArray;
 }
 
-function compare(a: string, b: string, aKey: number) {
+function compare(a: string, b: string, aKey: string) {
 
     for (let bKey in regularExpressions) {
 
         if (b.match(regularExpressions[bKey])) {
 
-            if (aKey === Number(bKey)) {
+            if (aKey === bKey) {
                 return a.localeCompare(b);
             }
 
-            return aKey - Number(bKey);
+            return Number(aKey) - Number(bKey);
         }
     }
 
