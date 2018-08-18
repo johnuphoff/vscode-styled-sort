@@ -20,3 +20,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 0.0.6
 - Further refactoring of sort method
 - Add regex for media queries
+
+## 0.0.7
+- Updated rule order
+- Updated animated gif to reflect latest changes
