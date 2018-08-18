@@ -14,10 +14,12 @@ It should be the top result.
 **Template Literals**  
     *line break*  
 **CSS ordered alphabetically**  
-    *line break*  
+    *line break*
+**Vendor prefixes (please don't)** 
+    *line break*
 **Pseudo Selectors**  
-    *line break*  
-**Vendor prefixes (please don't)**  
+    *line break*     
+**Media Queries** 
 
 ## Usage
 Press key combination ⇧⌘P to bring up the Command Pallete. Grep for styled-components: sort. 
