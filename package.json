@@ -2,7 +2,7 @@
   "name": "vscode-styled-sort",
   "displayName": "vscode-styled-sort",
   "description": "Opinionated rule sorting for styled-components.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "johnuphoff",
   "repository": {
     "type": "git",

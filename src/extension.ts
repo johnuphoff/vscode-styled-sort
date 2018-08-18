@@ -15,11 +15,12 @@ String.prototype.insert = function (index: number, string: string) {
     return string + this;
 };
 
-const regularExpressions: {[index: number] : RegExp} = {
+const regularExpressions: {[index: string] : RegExp} = {
     '0': /^[$]{(.*)}/,
     '1': /^[(a-z)].*/,
-    '2': /^[$]{(.*)}/,
-    '3': /^\&:[(a-z)]/
+    '2': /^-/,
+    '3': /^\&:[(a-z)]/,
+    '4': /^[@media].*[?{]/
 };
 
 function insertLineBreaks(string: string) {
@@ -57,24 +58,10 @@ function sortRules(array: Array<string>) {
         })
         .sort((a: string, b: string) => {
             
-            // matches template literal
-            if (a.match(regularExpressions[0])) {
-                return compare(a, b, '0');
-            }
-
-            // matches string
-            if (a.match(regularExpressions[1])) {
-                return compare(a, b, '1');
-            }
-
-            // matches dash followed by a letter
-            if (a.match(regularExpressions[2])) {
-                return compare(a, b, '2');
-            }
-
-            // matches pseudo selector
-            if (a.match(regularExpressions[3])) {
-                return compare(a, b, '3');
+            for (let key in regularExpressions) {
+                if (regularExpressions.hasOwnProperty(key) && a.match(regularExpressions[key])) {
+                    return compare(a, b, key);
+                }
             }
 
             return 1;
@@ -87,7 +74,7 @@ function compare(a: string, b: string, aKey: string) {
 
     for (let bKey in regularExpressions) {
 
-        if (b.match(regularExpressions[bKey])) {
+        if (regularExpressions.hasOwnProperty(bKey) && b.match(regularExpressions[bKey])) {
 
             if (aKey === bKey) {
                 if (a < b) { return -1;}
@@ -138,6 +125,68 @@ function isSupportedLanguage(language: string) {
     }
 }
 
+
+function handleNesting(array: Array<string>, level: number = 1) {
+
+    let nestedSelector: string = '';
+    let nestedSelectorString: string = '';
+    let nestedSelectorExists: boolean = false;
+    let mutableRules: Array<string> = array.slice(0);
+
+    // look for nested rules
+    for (let i = 0; i < array.length; i++) {
+        const line: string = array[i];
+
+        // nested selector exists when line matches regex
+        if (line.match(/.*{$/)) {
+            nestedSelectorExists = true;
+
+            // Save the selector
+            nestedSelector = line;
+
+            // Remove the line from mutableRules
+            mutableRules[i] = '';
+            
+            // Continue to next iteration
+            continue;
+        }
+
+        // all subsequent lines are appended to subquery string
+        if (nestedSelectorExists) {
+
+            // Remove the line from mutableRules
+            mutableRules[i] = '';
+
+            if (line !== '}') {
+                // TODO make this recursive
+                nestedSelectorString += line;
+                continue;
+            }
+       
+            // We have reached the end of the nested selector
+            nestedSelectorExists = false;
+
+            // now insert line breaks so that we can safely split on \n like we did previously
+            const nestedSelectorResultString: string = insertLineBreaks(nestedSelectorString);
+            const nestedSelectorRulesArray: Array<string> = arrayFromString(nestedSelectorResultString);
+
+            // sort inner rules alphabetically
+            const sortedNestedSelectorRules = sortRules(nestedSelectorRulesArray);
+
+            // Add line break between groups
+            let result: string = addNewLineBetweenGroups(sortedNestedSelectorRules, 2);
+
+            mutableRules.push(`${nestedSelector}\n${result}\t}`);
+
+            // Reset the string for the next cycle
+            nestedSelectorString = '';
+
+        }
+    }
+
+    return mutableRules;
+}
+
 export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('extension.styled-sort', () => {
@@ -163,68 +212,23 @@ export function activate(context: vscode.ExtensionContext) {
             if (match.length > 1) {
                 let rulesString: string = match[2];
 
-                // now insert line breaks so that we can safely split on \n
+                // insert line breaks so that we can safely split on \n
                 const resultString: string = insertLineBreaks(rulesString);
+
+                // new array from split on \n
                 const rulesArray: Array<string> = arrayFromString(resultString);
 
-                let pseudoSelector: string = '';
-                let pseudoSelectorString: string = '';
-                let pseudoSelectorExists: boolean = false;
-                let mutableRules: Array<string> = rulesArray.slice(0);
+                // handle nesting (recursivley)
+                const nestedRules: Array<string> = handleNesting(rulesArray);
+                
+                // sort styled rules (opinionated ordering defined by regularExpressions dict)
+                const sortedRules = sortRules(nestedRules);
 
-                // Let's hunt for pseudo selectors
-                for (let i = 0; i < rulesArray.length; i++) {
-                    const line: string = rulesArray[i];
-
-                    // Pseudo selector exists when line matches regex
-                    if (line.match(/^&:/g)) {
-                        pseudoSelectorExists = true;
-                        // Save the selector
-                        pseudoSelector = line;
-                        // Remove the line from mutableRules
-                        mutableRules[i] = '';
-                        // Continue to next iteration
-                        continue;
-                    }
-
-                    // all subsequent lines are appended to subquery string
-                    if (pseudoSelectorExists) {
-
-                        // Remove the line from mutableRules
-                        mutableRules[i] = '';
-
-                        if (line !== '}') {
-                            pseudoSelectorString += line;
-                        } else {
-                            // We have reached the end of the pseudo selector
-                            pseudoSelectorExists = false;
-
-                            // now insert line breaks so that we can safely split on \n like we did previously
-                            const pseudoSelectorResultString: string = insertLineBreaks(pseudoSelectorString);
-                            const pseudoSelectorRulesArray: Array<string> = arrayFromString(pseudoSelectorResultString);
-
-                            // sort inner rules alphabetically
-                            const sortedPseudoSelectorRules = sortRules(pseudoSelectorRulesArray);
-
-                            // Add line break between groups
-                            let result: string = addNewLineBetweenGroups(sortedPseudoSelectorRules, 2);
-
-                            mutableRules.push(`${pseudoSelector}\n${result}\t}`);
-
-                            // Reset the string for the next cycle
-                            pseudoSelectorString = '';
-
-                        }
-                    }
-                }
-
-                const sortedRules = sortRules(mutableRules);
-
-                // Add line break between groups
+                // Add line break between groups (opinionated)
                 let result: string = addNewLineBetweenGroups(sortedRules);
 
-                // clean up spaces and tabs between pseudo selectors
-                const regEx2 = /&:.*/g;
+                // clean up spaces and tabs between nested selectors
+                const regEx2 = /(&:|@).*[?{]/g;
                 let match2: any = [];
 
                 while (match2 = regEx2.exec(result)) {
