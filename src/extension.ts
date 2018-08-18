@@ -53,8 +53,6 @@ function arrayFromString(string: string) {
 
 function sortRules(array: Array<string>) {
 
-    console.log(array);
-
     const sortedArray = array.filter((element: string) => { 
             return element !== ''; 
         })
@@ -77,8 +75,6 @@ function compare(a: string, b: string, aKey: string) {
     for (let bKey in regularExpressions) {
 
         if (regularExpressions.hasOwnProperty(bKey) && b.match(regularExpressions[bKey])) {
-
-            console.log(a, b);
 
             if (aKey === bKey) {
                 if (a < b) { return -1;}
