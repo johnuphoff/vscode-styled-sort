@@ -16,3 +16,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Fix template literal sort
 - Refactor sort to use dictionary of regular expressions 
 - Remove localeCompare in favor of simple string comparisons
+
+## 0.0.6
+- Further refactoring of sort method
+- Add regex for media queries
